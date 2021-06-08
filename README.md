@@ -47,3 +47,10 @@ The mix task does the following:
 If you have any macros that generate Surface code, the warnings will not
 contain the correct line number and the mix task will not be able to repair
 them.
+
+
+## License
+
+Copyright (c) 2021, Paul Statezny.
+
+This source code is licensed under the [MIT License](LICENSE.md).
