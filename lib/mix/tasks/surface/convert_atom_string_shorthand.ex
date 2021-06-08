@@ -8,32 +8,26 @@ defmodule Mix.Tasks.Surface.ConvertAtomStringShorthand do
   end
 
   def compile_and_maybe_repair(directory) do
-    case System.cmd("mix", ["compile"], cd: directory) do
-      {message, 1} ->
-        case Regex.run(~r/\(CompileError\) (.*):(\d+): invalid value for property "(.*)". Expected a :atom, got: "(.*)"/, message) do
-          [_match, filepath, line, prop, value] ->
-            repair(filepath, String.to_integer(line), prop, value)
-            #compile_and_maybe_repair(directory)
-
-          nil ->
-            IO.puts "☠️ Crashed with message:\n\n#{message}"
-        end
-
-      {_, 0} ->
-        IO.puts "✅ Finished"
+    with {:error, %{status: 1, err: errors}} <- Rambo.run("mix", ["compile", "--force", "--warnings-as-errors"], cd: directory) do
+      ~r/warning: automatic conversion of string literals into atoms is deprecated and will be removed in v0.5.0.\n\nHint: replace `(.*)` with `(.*)`\n\n  (.*):(.*):/
+      |> Regex.scan(errors, capture: :all_but_first)
+      |> Enum.each(&repair/1)
     end
+
+    IO.puts "✅ Finished"
   end
 
-  defp repair(filepath, line_number, prop, value) do
+  defp repair([find, replace, filepath, line_number]) do
+    line_number = String.to_integer(line_number)
+
     updated =
       filepath
       |> File.read!()
       |> String.split("\n")
-      |> List.update_at(line_number - 1, fn line ->
-        String.replace(line, "#{prop}=\"#{value}\"", "#{prop}={:#{value}}")
+      |> List.update_at(line_number - 1, fn line_contents ->
+        String.replace(line_contents, find, replace)
       end)
       |> Enum.join("\n")
-      |> IO.inspect()
 
     File.write!(filepath, updated)
   end
