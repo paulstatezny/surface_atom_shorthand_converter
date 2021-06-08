@@ -2,21 +2,17 @@ defmodule Mix.Tasks.Surface.ConvertAtomStringShorthand do
   use Mix.Task
 
   def run(_args) do
-    compile_and_maybe_repair()
-  end
-
-  def compile_and_maybe_repair do
     with {:error, %{status: 1, err: errors}} <-
            Rambo.run("mix", ["compile", "--force", "--warnings-as-errors"]) do
       ~r/warning: automatic conversion of string literals into atoms is deprecated and will be removed in v0.5.0.\n\nHint: replace `(.*)` with `(.*)`\n\n  (.*):(.*):/
       |> Regex.scan(errors, capture: :all_but_first)
-      |> Enum.each(&repair/1)
+      |> Enum.each(&repair_old_syntax/1)
     end
 
     IO.puts("✅ Finished")
   end
 
-  defp repair([find, replace, filepath, line_number]) do
+  defp repair_old_syntax([find, replace, filepath, line_number]) do
     line_number = String.to_integer(line_number)
 
     updated =
