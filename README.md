@@ -17,7 +17,7 @@ is turned into this:
 
 ## Usage
 
-*You must have Surface version `0.4.*` installed as the mix task relies on the warnings it generates.**
+**You must have Surface version `0.4.*` installed as the mix task relies on the warnings it generates.**
 
 Install the package by adding the following to your list of dependencies in `mix.exs`:
 
